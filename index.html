@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Key Support</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <div id="button-list" class="button-list">
+
+    </div>
+</body>
+</html>
+
+<script>
+    liff
+        .init({
+            liffId: "1655758300-4G7poLbg"
+        })
+        .then(() => {
+            const urlParams = new URLSearchParams(window.location.search)
+            const close = urlParams.get('close') //yes
+            const texts = urlParams.getAll('text')
+            const buttonList = document.getElementById('button-list')
+            for (const text of texts) {
+                let buttonNode = document.createElement('button')
+                let buttonTextNode = document.createTextNode(text)
+                buttonNode.appendChild(buttonTextNode)
+                buttonNode.addEventListener('click', () => {
+                    liff.sendMessages([
+                        {
+                            type: 'text',
+                            text: text
+                        }
+                    ])
+                })
+                buttonList.appendChild(buttonNode)
+            }
+
+            if(close === 'yes'){
+                liff.closeWindow()
+            }
+        })
+</script>
