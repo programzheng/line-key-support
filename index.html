@@ -16,27 +16,20 @@
 <script>
     function textHandler(urlSearch, urlSearchParams) {
         const buttonList = document.getElementById('button-list')
-        //get all match (text|\d) param's count length
-        console.log(urlSearch)
-        const textsCount = urlSearch.match('(text|\d)').length
-        let text = urlSearchParams.get('text')
-        if(text){
-            let buttonNode = document.createElement('button')
-            let buttonTextNode = document.createTextNode(text)
-            buttonNode.appendChild(buttonTextNode)
-            buttonNode.addEventListener('click', () => {
-                liff.sendMessages([
-                    {
-                        type: 'text',
-                        text: text
-                    }
-                ])
-            })
-            buttonList.appendChild(buttonNode)
+        //get all match /text\d+=/g param's count length
+        const textsCount = urlSearch.match(/text\d+=/g).length
+        const texts = []
+        if(urlSearchParams.get('text')){
+            texts.push(urlSearchParams.get('text'))
+        }
+        if(urlSearchParams.get('text0')){
+            texts.push(urlSearchParams.get('text0'))
         }
         for (let index = 0; index < textsCount; index++) {
-            text = urlSearchParams.get('text' + index)
-            if(text){
+            texts.push(urlSearchParams.get('text' + (index + 1)))
+        }
+        for (const text of texts) {
+            if(text !== null){
                 let buttonNode = document.createElement('button')
                 let buttonTextNode = document.createTextNode(text)
                 buttonNode.appendChild(buttonTextNode)
