@@ -1,20 +1,47 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Line Key Support</title>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-</head>
-<body>
-    <div id="button-list" class="button-list">
-
-    </div>
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Line Key Support</title>
+        <link type="text/css" rel="stylesheet" href="app.css">
+        <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    </head>
+    <body>
+        <div id="defulat-button-list" class="center">
+            <button id="meme-img-button">梗圖</button>
+        </div>
+        <div id="button-list"></div>
+    </body>
 </html>
 
 <script>
-    function textHandler(urlSearch, urlSearchParams) {
+    function loadBase64File(path) {
+        let content = ''
+        const request = new XMLHttpRequest()
+        request.open('GET', path, false)
+        request.onreadystatechange = function () {
+            if(request.readyState === 4 && request.status === 200) {
+                content = request.responseText
+            }
+        }
+        request.send(null)
+        return content
+    }
+    
+    function getRandomMemeImg() {
+        const base64String = loadBase64File('meme-imgs')
+        const base64StringDecode = atob(base64String)
+        const imgs = JSON.parse(base64StringDecode)
+        const random = Math.floor(Math.random() * imgs.length);
+        return imgs[random]
+    }
+
+    function textHandler(urlSearch) {
+        if(urlSearch == ''){
+            return false
+        }
+        const urlSearchParams = new URLSearchParams(urlSearch)
         const buttonList = document.getElementById('button-list')
         //get all match /text\d+=/g param's count length
         const textsCount = urlSearch.match(/text\d+=/g).length
@@ -46,7 +73,8 @@
         }
     }
 
-    function closeHandler(urlSearch, urlSearchParams) {
+    function closeHandler(urlSearch) {
+        const urlSearchParams = new URLSearchParams(urlSearch)
         const close = urlSearchParams.get('close') //yes
         if(close === 'yes'){
             liff.closeWindow()
@@ -58,10 +86,21 @@
         })
         .then(() => {
             const urlSearch = window.location.search
-            const urlSearchParams = new URLSearchParams(urlSearch)
+            //meme
+            memeImgButton = document.getElementById('meme-img-button')
+            memeImgButton.addEventListener('click', () => {
+                const memeImg = getRandomMemeImg()
+                liff.sendMessages([
+                    {
+                        type: 'image',
+                        originalContentUrl: memeImg,
+                        previewImageUrl: memeImg
+                    }
+                ])
+            })
             //text
-            textHandler(urlSearch, urlSearchParams)
+            textHandler(urlSearch)
             //auto close window
-            closeHandler(urlSearch, urlSearchParams)
+            closeHandler(urlSearch)
         })
 </script>
