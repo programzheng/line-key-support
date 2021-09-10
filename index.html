@@ -48,9 +48,9 @@
 </html>
 
 <script>
-    const remoteImagesUrl = 'https://programzheng-web-crawler.herokuapp.com'
+    const remoteMemeImagesUrl = 'https://programzheng-web-crawler.herokuapp.com/memes'
     //get remote meme images
-    getRemoteMemeImgs(remoteImagesUrl)
+    getRemoteMemeImgs(remoteMemeImagesUrl)
     
     function loadBase64File(path) {
         let content = ''
@@ -95,7 +95,7 @@
     }
 
     async function getRemoteRandomMemeImg() {
-        const imgs = await getRemoteMemeImgs(remoteImagesUrl)
+        const imgs = await getRemoteMemeImgs(remoteMemeImagesUrl)
         return getRandomArrayItem(imgs)
     }
 
