@@ -4,18 +4,54 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Line Key Support</title>
-        <link type="text/css" rel="stylesheet" href="app.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+        <link href="https://unpkg.com/nes.css@latest/css/nes.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     </head>
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #050505cc;
+            font-size: calc(20px + (60 - 14) * ((100vw - 300px) / (1600 - 300)));
+        }
+        .content {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .content .title {
+            overflow: hidden;
+            align-self: center;
+        }
+        .content .button-list {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+    </style>
     <body>
-        <div id="defulat-button-list" class="center">
-            <button id="meme-img-button">梗圖</button>
+        <div class="content">
+            <div class="title">
+                <p class="nes-text is-primary">Line Key Support</p>
+            </div>
+            <div class="button-list" id="button-list">
+                <button type="button" id="meme-img-button" class="nes-btn is-primary action-button">Get MeMe</button>
+            </div>
         </div>
-        <div id="button-list"></div>
     </body>
 </html>
 
 <script>
+    const remoteImagesUrl = 'https://programzheng-web-crawler.herokuapp.com'
+    //get remote meme images
+    getRemoteMemeImgs(remoteImagesUrl)
+    
     function loadBase64File(path) {
         let content = ''
         const request = new XMLHttpRequest()
@@ -29,12 +65,43 @@
         return content
     }
     
-    function getRandomMemeImg() {
+    function getLocalMemeImgs() {
         const base64String = loadBase64File('meme-imgs')
         const base64StringDecode = atob(base64String)
         const imgs = JSON.parse(base64StringDecode)
-        const random = Math.floor(Math.random() * imgs.length);
-        return imgs[random]
+        
+        return imgs
+    }
+
+    async function getRemoteMemeImgs(url) {
+        const reLoadUpdateAt = 60
+        let imgs = JSON.parse(localStorage.getItem('meme_images') || null)
+        const memeImagesUpdateAt = parseInt(localStorage.getItem('meme_images_update_at'))+reLoadUpdateAt
+        if(!imgs || (Date.now()/1000) > memeImagesUpdateAt){
+            imgs = await axios.get(url).then((response) => {
+                return response.data
+            }).catch((error) => {
+                console.error(error)
+            })
+            localStorage.setItem('meme_images', JSON.stringify(imgs))
+            localStorage.setItem('meme_images_update_at', Date.now() / 1000)
+        }
+        return imgs
+    }
+
+    function getLocalRandomMemeImg() {
+        const imgs = getLocalMemeImgs()
+        return getRandomArrayItem(imgs)
+    }
+
+    async function getRemoteRandomMemeImg() {
+        const imgs = await getRemoteMemeImgs(remoteImagesUrl)
+        return getRandomArrayItem(imgs)
+    }
+
+    function getRandomArrayItem(data) {
+        const random = Math.floor(Math.random() * data.length);
+        return data[random]
     }
 
     function textHandler(urlSearch) {
@@ -58,6 +125,7 @@
         for (const text of texts) {
             if(text !== null){
                 let buttonNode = document.createElement('button')
+                buttonNode.className = 'nes-btn is-primary action-button'
                 let buttonTextNode = document.createTextNode(text)
                 buttonNode.appendChild(buttonTextNode)
                 buttonNode.addEventListener('click', () => {
@@ -88,8 +156,8 @@
             const urlSearch = window.location.search
             //meme
             memeImgButton = document.getElementById('meme-img-button')
-            memeImgButton.addEventListener('click', () => {
-                const memeImg = getRandomMemeImg()
+            memeImgButton.addEventListener('click', async () => {
+                const memeImg = await getRemoteRandomMemeImg()
                 liff.sendMessages([
                     {
                         type: 'image',
