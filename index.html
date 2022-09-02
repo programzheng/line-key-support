@@ -1,87 +1,99 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Line Key Support</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-        <link href="https://unpkg.com/nes.css@latest/css/nes.min.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-        <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    </head>
-    <style>
-        body {
-            font-family: 'Press Start 2P', cursive;
-            background-color: #050505cc;
-            font-size: calc(20px + (60 - 14) * ((100vw - 300px) / (1600 - 300)));
-        }
-        .content {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .content .title {
-            overflow: hidden;
-            align-self: center;
-        }
-        .content .button-list {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-        }
-    </style>
-    <body>
-        <div class="content">
-            <div class="title">
-                <p class="nes-text is-primary">Line Key Support</p>
-            </div>
-            <div class="button-list" id="button-list">
-                <button type="button" id="meme-img-button" class="nes-btn is-primary action-button">Get MeMe</button>
-            </div>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Key Support</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@latest/css/nes.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<style>
+    body {
+        font-family: 'Press Start 2P', cursive;
+        background-color: #050505cc;
+        font-size: calc(20px + (60 - 14) * ((100vw - 300px) / (1600 - 300)));
+    }
+
+    .content {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .content .title {
+        overflow: hidden;
+        align-self: center;
+    }
+
+    .content .button-list {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+    }
+</style>
+
+<body>
+    <div class="content">
+        <div class="title">
+            <p class="nes-text is-primary">Line Key Support</p>
         </div>
-    </body>
+        <div class="button-list" id="button-list">
+            <button type="button" id="meme-img-button" class="nes-btn is-primary action-button">Get MeMe</button>
+        </div>
+    </div>
+</body>
+
 </html>
 
 <script>
-    const remoteMemeImagesUrl = 'https://programzheng-web-crawler.herokuapp.com/memes'
+    const remoteMemeImagesUrl = 'http://localhost:9090/memes'
     //get remote meme images
     getRemoteMemeImgs(remoteMemeImagesUrl)
-    
+
     function loadBase64File(path) {
         let content = ''
         const request = new XMLHttpRequest()
         request.open('GET', path, false)
         request.onreadystatechange = function () {
-            if(request.readyState === 4 && request.status === 200) {
+            if (request.readyState === 4 && request.status === 200) {
                 content = request.responseText
             }
         }
         request.send(null)
         return content
     }
-    
+
     function getLocalMemeImgs() {
         const base64String = loadBase64File('meme-imgs')
         const base64StringDecode = atob(base64String)
         const imgs = JSON.parse(base64StringDecode)
-        
+
         return imgs
     }
 
     async function getRemoteMemeImgs(url) {
         const reLoadUpdateAt = 60
-        let imgs = JSON.parse(localStorage.getItem('meme_images') || null)
-        const memeImagesUpdateAt = parseInt(localStorage.getItem('meme_images_update_at'))+reLoadUpdateAt
-        if(!imgs || (Date.now()/1000) > memeImagesUpdateAt){
+        const localStorageMeMeImages = localStorage.getItem('meme_images')
+        let imgs = []
+        if (localStorageMeMeImages) {
+            imgs = JSON.parse(localStorageMeMeImages)
+        }
+        const localStorageMemeImagesUpdateAt = localStorage.getItem('meme_images_update_at')
+        let memeImagesUpdateAt = 0
+        memeImagesUpdateAt = parseInt(localStorageMemeImagesUpdateAt) + reLoadUpdateAt
+        if (imgs.length === 0 || (Date.now() / 1000) > memeImagesUpdateAt) {
             imgs = await axios.get(url).then((response) => {
                 return response.data
             }).catch((error) => {
-                console.error(error)
+                throw new Error(error.message);
             })
             localStorage.setItem('meme_images', JSON.stringify(imgs))
             localStorage.setItem('meme_images_update_at', Date.now() / 1000)
@@ -105,7 +117,7 @@
     }
 
     function textHandler(urlSearch) {
-        if(urlSearch == ''){
+        if (urlSearch == '') {
             return false
         }
         const urlSearchParams = new URLSearchParams(urlSearch)
@@ -113,17 +125,17 @@
         //get all match /text\d+=/g param's count length
         const textsCount = urlSearch.match(/text\d+=/g).length
         const texts = []
-        if(urlSearchParams.get('text')){
+        if (urlSearchParams.get('text')) {
             texts.push(urlSearchParams.get('text'))
         }
-        if(urlSearchParams.get('text0')){
+        if (urlSearchParams.get('text0')) {
             texts.push(urlSearchParams.get('text0'))
         }
         for (let index = 0; index < textsCount; index++) {
             texts.push(urlSearchParams.get('text' + (index + 1)))
         }
         for (const text of texts) {
-            if(text !== null){
+            if (text !== null) {
                 let buttonNode = document.createElement('button')
                 buttonNode.className = 'nes-btn is-primary action-button'
                 let buttonTextNode = document.createTextNode(text)
@@ -144,7 +156,7 @@
     function closeHandler(urlSearch) {
         const urlSearchParams = new URLSearchParams(urlSearch)
         const close = urlSearchParams.get('close') //yes
-        if(close === 'yes'){
+        if (close === 'yes') {
             liff.closeWindow()
         }
     }
